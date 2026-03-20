@@ -1,0 +1,17 @@
+# Ignore everything by default
+*
+
+# Do NOT ignore this .gitignore file itself
+!.gitignore
+
+# Do NOT ignore these files
+!__init__.py
+!device.py
+!subckt.py
+!virtuoso.py
+!template.py
+!README.md
+!logo--cdl_gen.png
+!templates/
+!templates/*
+!devmap.txt

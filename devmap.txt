@@ -1,0 +1,3 @@
+devselect := resistor res
+devselect := capacitor cap
+devselect := inductor ind
