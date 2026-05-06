@@ -3,9 +3,10 @@
 # Author        : Kwantae Kim <kwantae.kim@aalto.fi>
 # Group         : TSirc Group, Aalto University
 # Created       : 06.Apr.2025
+# Updated       : 06.May.2026
 # -----------------------------------------------------------------------------
 
-import subprocess, os
+import subprocess, os, shutil, glob
 
 def scratchstart(lib_dir):
     """
@@ -36,6 +37,13 @@ def spicein(cdl_filename, work_dir, lib_dir):
            f' -devmapFile {os.path.dirname(__file__)}/devmap.txt')
     print(f"[CDL Gen]: {cmd}")
     subprocess.run(cmd, shell=True, cwd=work_dir)
+
+    # Move spiceIn log into cdl_gen/logs/
+    logs_dir = os.path.join(os.path.dirname(__file__), "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    for src in glob.glob(os.path.join(work_dir, "c2s_*.log")):
+        shutil.move(src, os.path.join(logs_dir, os.path.basename(src)))
+    print(f"[CDL Gen]: Moved logs -> {logs_dir}/")
 
 def topsymgen(ckt_top):
     from . import args, lib_dir
