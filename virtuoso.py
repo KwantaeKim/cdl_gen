@@ -8,6 +8,28 @@
 
 import subprocess, os, shutil, glob
 
+def createlib(lib_name, tech=None):
+    """
+    Create a Virtuoso library and register it in cds.lib.
+    tech: optional tech library to bind (e.g. "gpdk045").
+    """
+    work_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    bind = f'techBindTechLibToDesignLib("{tech}" "{lib_name}")' if tech else ""
+    print(f"[CDL Gen]: Creating library '{lib_name}' ...")
+    subprocess.run(f'''virtuoso -nograph <<EOC | awk '/===== Virtuoso =====/{{flag=1}} flag'
+(printf "===== Virtuoso =====\\n")
+(if ddGetObj("{lib_name}")
+    (printf "[CDL Gen]: Library '{lib_name}' already exists.\\n")
+    (progn
+        ddCreateLib("{lib_name}" "./{lib_name}")
+        {bind}
+        (printf "[CDL Gen]: Library '{lib_name}' created.\\n")
+    )
+)
+exit()
+EOC
+''', shell=True, cwd=work_dir)
+
 def scratchstart(lib_dir):
     """
     Delete the existing cells in the module library, if args.scratch = True

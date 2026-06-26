@@ -9,6 +9,8 @@
 !device.py
 !subckt.py
 !virtuoso.py
+!newlib.py
+!cdl_gen.il
 !template.py
 !README.md
 !logo--cdl_gen.png

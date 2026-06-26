@@ -8,7 +8,7 @@
 
 from .device import device
 from .subckt import subckt
-from .virtuoso import scratchstart, spicein, topsymgen
+from .virtuoso import scratchstart, spicein, topsymgen, createlib
 import argparse, subprocess, os, sys, shutil
 
 if shutil.which("spiceIn") is None:
@@ -28,11 +28,9 @@ lib_dir = None
 script_dir = None
 reflib_list = []
 
-def pathsetup(bag=False):
+def pathsetup():
     """
-    Set up module name and paths.
-    If bag=True, use BAG_WORK_DIR environment variable.
-    Otherwise, use current script directory.
+    Set up module name and paths from the current script directory.
     """
     global module, work_dir, lib_dir, script_dir
 

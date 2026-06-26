@@ -33,7 +33,13 @@ virtuoso/
     └── script.py         # copied from cdl_gen/templates/
 ```
 
-**Step 3:** Prepare a new library (e.g., `lib`) in *Library Manager*.
+**Step 3:** Prepare a new library (e.g., `lib`). Either make it by hand in *Library Manager*, or generate it automatically — set `newlib` in `cdl_gen/newlib.py` and run:
+
+```bash
+python3 cdl_gen/newlib.py
+```
+
+This calls `cdl_gen.createlib()`, which creates the library and registers it in `cds.lib` (idempotent). Then refresh *Library Manager* (see [CIW Helpers](#ciw-helpers)).
 
 **Step 4:** Copy a template (e.g., `cdl_gen/templates/cap.py`) to your library directory. Rename the file as you wish. Let's call it `script` in the following steps.
 
@@ -43,7 +49,7 @@ virtuoso/
 python3 lib/script.py
 ```
 
-**Step 6:** In *Library Manager* click **View** → **Refresh**. Now you can see the generated schematic under your `lib`.
+**Step 6:** Refresh *Library Manager* (**View** → **Refresh**, or run `cdlgenRefresh()` in the CIW — see [CIW Helpers](#ciw-helpers)). Now you can see the generated schematic under your `lib`.
 
 ## Quick Start
 
@@ -92,6 +98,26 @@ python3 lib/script.py --topsym           # also generate top cell symbol
 python3 lib/script.py --scratch --topsym # both
 ```
 
+## CIW Helpers
+
+`cdl_gen.il` adds SKILL helpers for the Virtuoso CIW. An already-open session only sees external `cdl_gen` changes (`newlib.py`, `spiceIn`) after a refresh. Load the helper in the CIW:
+
+```scheme
+load("./cdl_gen/cdl_gen.il")
+```
+
+To automate this, add that `load(...)` line at the end of `./.cdsinit` so the helper is available in every session without loading it by hand.
+
+Then, after running a generator script:
+
+```scheme
+cdlgenRefresh()
+```
+
+| Function | Description |
+|---|---|
+| `cdlgenRefresh()` | Full *Library Manager* refresh from disk (same as **View** → **Refresh**) |
+
 ## Core API
 
 | Class / Function | Description |
@@ -99,6 +125,7 @@ python3 lib/script.py --scratch --topsym # both
 | `cdl_gen.device(name, model, terminals, **params)` | A single SPICE device instance (e.g., cap, res, ind) |
 | `cdl_gen.subckt(name, pins)` | A `.SUBCKT` block containing devices |
 | `subckt.add_device(device)` | Add a device to a subcircuit |
+| `cdl_gen.createlib(lib_name, tech=None)` | Create a Virtuoso library and register it in `cds.lib` (idempotent) |
 | `cdl_gen.pathsetup()` | Resolve module name and working directories from the calling script |
 | `cdl_gen.write_cdl(filename)` | Serialize all subcircuits to a `.cdl` file |
 | `cdl_gen.scratchstart(lib_dir)` | If `--scratch` is set, wipe existing cells in the library |
