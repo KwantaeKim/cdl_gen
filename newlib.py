@@ -10,6 +10,7 @@
 """
 1. Initialize
 """
+print("[CDL Gen]: === 1. Initialize ===")
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import cdl_gen
@@ -18,5 +19,6 @@ cdl_gen.pathsetup()
 """
 2. Create a Library
 """
+print("[CDL Gen]: === 2. Create a Library ===")
 newlib = "cdlgenTemplates"       # Write your library name
 cdl_gen.createlib(newlib)

@@ -1,0 +1,46 @@
+{
+  "place": {
+    "instances": [
+      {"name": "M1", "lib": "cdlgenPrim", "cell": "nmos", "x": 1.0, "y": 2.0, "orient": "R0"},
+      {"name": "M2", "lib": "cdlgenPrim", "cell": "nmos", "x": 3.5, "y": 2.0, "orient": "MY"},
+      {"name": "M3", "lib": "cdlgenPrim", "cell": "pmos", "x": 1.5, "y": 4.0, "orient": "MY"},
+      {"name": "M4", "lib": "cdlgenPrim", "cell": "pmos", "x": 3.0, "y": 4.0, "orient": "R0"},
+      {"name": "M5", "lib": "cdlgenPrim", "cell": "nmos", "x": 2.0, "y": 0.0, "orient": "R0"}
+    ],
+    "pins": [
+      {"name": "VOUT",  "x": 4.75, "y": 3.0,    "orient": "R0"},
+      {"name": "VINP",  "x": 0.25, "y": 2.1875, "orient": "R0"},
+      {"name": "VINN",  "x": 4.75, "y": 2.1875, "orient": "R0"},
+      {"name": "VBIAS", "x": 0.75, "y": 0.1875, "orient": "R0"}
+    ]
+  },
+  "wire": {
+    "diodes": ["M3"],
+    "powerlines": [
+      {"net": "VDD", "terms": ["M3.S", "M4.S"], "dir": "up"},
+      {"net": "VSS", "terms": ["M5.S"], "dir": "down"}
+    ],
+    "wires": [
+      ["M1.D", "M3.D"],
+      ["M3.G", "M4.G"],
+
+      ["M2.D", "M4.D"],
+      [[3.25, 3.0], [4.75, 3.0]],
+
+      ["M1.S", "M1.B"],
+      ["M2.S", "M2.B"],
+      ["M1.S", [1.25, 1.25]],
+      ["M2.S", [3.25, 1.25]],
+      [[1.25, 1.25], [3.25, 1.25]],
+      ["M5.D", [2.25, 1.25]],
+
+      ["M3.S", "M3.B"],
+      ["M4.S", "M4.B"],
+      ["M5.S", "M5.B"],
+
+      ["M1.G", [0.25, 2.1875]],
+      ["M2.G", [4.75, 2.1875]],
+      ["M5.G", [0.75, 0.1875]]
+    ]
+  }
+}

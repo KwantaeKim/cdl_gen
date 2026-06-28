@@ -1,0 +1,44 @@
+{
+  "place": {
+    "instances": [
+      {"name": "M1", "device": "nmos", "x": 1.0, "y": 2.0, "orient": "R0"},
+      {"name": "M2", "device": "nmos", "x": 3.5, "y": 2.0, "orient": "MY"},
+      {"name": "M3", "device": "pmos", "x": 1.5, "y": 4.0, "orient": "MY"},
+      {"name": "M4", "device": "pmos", "x": 3.0, "y": 4.0, "orient": "R0"},
+      {"name": "M5", "device": "nmos", "x": 2.0, "y": 0.0, "orient": "R0"}
+    ],
+    "pins": [
+      {"name": "VOUT", "x": 4.75, "y": 3.0, "orient": "R0"}
+    ]
+  },
+  "wire": {
+    "diodes": ["M3"],
+    "powerlines": [
+      {"net": "VDD", "terms": ["M3.S", "M4.S"], "dir": "up"},
+      {"net": "VSS", "terms": ["M5.S"], "dir": "down"}
+    ],
+    "ports": [
+      {"net": "VINP",  "term": "M1.G", "dir": "left"},
+      {"net": "VINN",  "term": "M2.G", "dir": "right"},
+      {"net": "VBIAS", "term": "M5.G", "dir": "left"}
+    ],
+    "wires": [
+      ["M1.D", "M3.D"],
+      ["M3.G", "M4.G"],
+
+      ["M2.D", "M4.D"],
+      [[3.25, 3.0], [4.75, 3.0]],
+
+      ["M1.S", "M1.B"],
+      ["M2.S", "M2.B"],
+      ["M1.S", [1.25, 1.25]],
+      ["M2.S", [3.25, 1.25]],
+      [[1.25, 1.25], [3.25, 1.25]],
+      ["M5.D", [2.25, 1.25]],
+
+      ["M3.S", "M3.B"],
+      ["M4.S", "M4.B"],
+      ["M5.S", "M5.B"]
+    ]
+  }
+}

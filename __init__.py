@@ -8,7 +8,7 @@
 
 from .device import device
 from .subckt import subckt
-from .virtuoso import scratchstart, spicein, topsymgen, createlib
+from .virtuoso import scratchstart, spicein, topsymgen, createlib, drawsym, placesch, extractsch, techmap
 import argparse, subprocess, os, sys, shutil
 
 if shutil.which("spiceIn") is None:
@@ -19,7 +19,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scratch", action="store_true")
     parser.add_argument("--topsym", action="store_true")
-    return parser.parse_args()
+    return parser.parse_known_args()[0]   # ignore extra args (e.g. cell name to extract.py)
 
 args = parse_args()
 module = None

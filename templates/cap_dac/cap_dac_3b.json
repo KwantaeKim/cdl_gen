@@ -1,0 +1,23 @@
+{
+  "place": {
+    "master": {"lib": "analogLib", "cell": "cap", "view": "symbol"},
+    "row_y": 0.0,
+    "instances": [
+      {"name": "C0", "x": 0.0, "top": "VOUT", "bot": "B0"},
+      {"name": "C1", "x": 1.0, "top": "VOUT", "bot": "B1"},
+      {"name": "C2", "x": 1.5, "top": "VOUT", "bot": "B1"},
+      {"name": "C3", "x": 2.5, "top": "VOUT", "bot": "B2"},
+      {"name": "C4", "x": 3.0, "top": "VOUT", "bot": "B2"},
+      {"name": "C5", "x": 3.5, "top": "VOUT", "bot": "B2"},
+      {"name": "C6", "x": 4.0, "top": "VOUT", "bot": "B2"}
+    ]
+  },
+  "wire": {
+    "rails": [
+      {"net": "VOUT", "edge": "top",    "clearance": 1.0, "pin_x": 6.0},
+      {"net": "B0",   "edge": "bottom", "clearance": 1.0, "pin_x": 0.5},
+      {"net": "B1",   "edge": "bottom", "clearance": 1.0, "pin_x": 2.0},
+      {"net": "B2",   "edge": "bottom", "clearance": 1.0, "pin_x": 4.5}
+    ]
+  }
+}

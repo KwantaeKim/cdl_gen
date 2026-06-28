@@ -10,10 +10,19 @@
 !subckt.py
 !virtuoso.py
 !newlib.py
+!config.py
+!extract.py
 !cdl_gen.il
-!template.py
-!README.md
-!logo--cdl_gen.png
-!templates/
-!templates/*
+!techmap.json
 !devmap.txt
+!README.md
+!LICENSE
+!logo--cdl_gen.png
+
+# Templates (recurse into subfolders)
+!templates/
+!templates/**
+
+# Never track caches
+__pycache__/
+*.pyc

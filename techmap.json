@@ -1,0 +1,17 @@
+{
+  "lib": "gpdk045",
+  "cells": {
+    "nmos": "nmos1v",
+    "pmos": "pmos1v"
+  },
+  "params": {
+    "l": "l",
+    "w_f": "fw",
+    "n_f": "fingers"
+  },
+  "defaults": {
+    "l": "1u",
+    "w_f": "1u",
+    "n_f": 1
+  }
+}

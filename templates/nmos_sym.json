@@ -1,0 +1,300 @@
+{
+  "lines": [
+    [
+      [
+        0.09375,
+        0.28125
+      ],
+      [
+        0.09375,
+        0.09375
+      ]
+    ],
+    [
+      [
+        0.125,
+        0.09375
+      ],
+      [
+        0.125,
+        0.28125
+      ]
+    ],
+    [
+      [
+        0.125,
+        0.09375
+      ],
+      [
+        0.25,
+        0.09375
+      ],
+      [
+        0.25,
+        0.0
+      ]
+    ],
+    [
+      [
+        0.0,
+        0.1875
+      ],
+      [
+        0.09375,
+        0.1875
+      ]
+    ],
+    [
+      [
+        0.125,
+        0.1875
+      ],
+      [
+        0.25,
+        0.1875
+      ]
+    ],
+    [
+      [
+        0.125,
+        0.28125
+      ],
+      [
+        0.25,
+        0.28125
+      ],
+      [
+        0.25,
+        0.375
+      ]
+    ],
+    [
+      [
+        0.1875,
+        0.125
+      ],
+      [
+        0.25,
+        0.09375
+      ],
+      [
+        0.1875,
+        0.0625
+      ]
+    ]
+  ],
+  "pins": [
+    {
+      "name": "G",
+      "bBox": [
+        [
+          -0.025,
+          0.1625
+        ],
+        [
+          0.025,
+          0.2125
+        ]
+      ],
+      "dir": "inputOutput"
+    },
+    {
+      "name": "B",
+      "bBox": [
+        [
+          0.225,
+          0.1625
+        ],
+        [
+          0.275,
+          0.2125
+        ]
+      ],
+      "dir": "inputOutput"
+    },
+    {
+      "name": "D",
+      "bBox": [
+        [
+          0.225,
+          0.35
+        ],
+        [
+          0.275,
+          0.4
+        ]
+      ],
+      "dir": "inputOutput"
+    },
+    {
+      "name": "S",
+      "bBox": [
+        [
+          0.225,
+          -0.025
+        ],
+        [
+          0.275,
+          0.025
+        ]
+      ],
+      "dir": "inputOutput"
+    }
+  ],
+  "selbox": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.25,
+      0.375
+    ]
+  ],
+  "labels": [
+    {
+      "layer": [
+        "device",
+        "annotate"
+      ],
+      "orig": [
+        0.2,
+        0.3875
+      ],
+      "text": "[@cellName]",
+      "justify": "lowerRight",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "NLPLabel"
+    },
+    {
+      "layer": [
+        "annotate",
+        "drawing8"
+      ],
+      "orig": [
+        0.21875,
+        0.3125
+      ],
+      "text": "cdsTerm(\"D\")",
+      "justify": "lowerRight",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "ILLabel"
+    },
+    {
+      "layer": [
+        "annotate",
+        "drawing8"
+      ],
+      "orig": [
+        0.09375,
+        0.225
+      ],
+      "text": "cdsTerm(\"G\")",
+      "justify": "lowerRight",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "ILLabel"
+    },
+    {
+      "layer": [
+        "annotate",
+        "drawing8"
+      ],
+      "orig": [
+        0.30625,
+        0.1625
+      ],
+      "text": "cdsTerm(\"B\")",
+      "justify": "lowerLeft",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "ILLabel"
+    },
+    {
+      "layer": [
+        "annotate",
+        "drawing8"
+      ],
+      "orig": [
+        0.21875,
+        0.00625
+      ],
+      "text": "cdsTerm(\"S\")",
+      "justify": "lowerRight",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "ILLabel"
+    },
+    {
+      "layer": [
+        "annotate",
+        "drawing7"
+      ],
+      "orig": [
+        0.3125,
+        0.40625
+      ],
+      "text": "cdsName()",
+      "justify": "lowerLeft",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "ILLabel"
+    },
+    {
+      "layer": [
+        "annotate",
+        "drawing"
+      ],
+      "orig": [
+        0.3125,
+        0.24375
+      ],
+      "text": "w_f:[@w_f]",
+      "justify": "lowerLeft",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "NLPLabel"
+    },
+    {
+      "layer": [
+        "annotate",
+        "drawing"
+      ],
+      "orig": [
+        0.3125,
+        0.1
+      ],
+      "text": "l:[@l]",
+      "justify": "lowerLeft",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "NLPLabel"
+    },
+    {
+      "layer": [
+        "annotate",
+        "drawing"
+      ],
+      "orig": [
+        0.3125,
+        0.01875
+      ],
+      "text": "n_f:[@n_f]",
+      "justify": "lowerLeft",
+      "orient": "R0",
+      "font": "stick",
+      "height": 0.05,
+      "type": "NLPLabel"
+    }
+  ]
+}
