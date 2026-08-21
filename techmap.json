@@ -1,4 +1,5 @@
 {
+  "_howto": "params are PDK CDF names: run cdlgenDumpCDF(\"<lib>\" \"<cell>\") in the CIW and match each by its prompt, not by how the name reads. Optional key w_tot: the total-width param, set to w_f x n_f (README, Step 1).",
   "lib": "gpdk045",
   "cells": {
     "nmos": "nmos1v",
@@ -7,7 +8,8 @@
   "params": {
     "l": "l",
     "w_f": "fw",
-    "n_f": "fingers"
+    "n_f": "fingers",
+    "w_tot": "w"
   },
   "defaults": {
     "l": "1u",

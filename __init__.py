@@ -8,7 +8,7 @@
 
 from .device import device
 from .subckt import subckt
-from .virtuoso import scratchstart, spicein, topsymgen, createlib, drawsym, placesch, extractsch, techmap
+from .virtuoso import scratchstart, spicein, topsymgen, createlib, drawsym, placesch, extractsch, techmap, pdkparams
 import argparse, subprocess, os, sys, shutil
 
 if shutil.which("spiceIn") is None:

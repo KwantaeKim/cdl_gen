@@ -1,11 +1,11 @@
 {
   "place": {
     "instances": [
-      {"name": "M1", "device": "nmos", "x": 1.0, "y": 2.0, "orient": "R0"},
-      {"name": "M2", "device": "nmos", "x": 3.5, "y": 2.0, "orient": "MY"},
-      {"name": "M3", "device": "pmos", "x": 1.5, "y": 4.0, "orient": "MY"},
-      {"name": "M4", "device": "pmos", "x": 3.0, "y": 4.0, "orient": "R0"},
-      {"name": "M5", "device": "nmos", "x": 2.0, "y": 0.0, "orient": "R0"}
+      {"name": "M1", "lib": "cdlgenPrim", "cell": "nmos", "x": 1.0, "y": 2.0, "orient": "R0"},
+      {"name": "M2", "lib": "cdlgenPrim", "cell": "nmos", "x": 3.5, "y": 2.0, "orient": "MY"},
+      {"name": "M3", "lib": "cdlgenPrim", "cell": "pmos", "x": 1.5, "y": 4.0, "orient": "MY"},
+      {"name": "M4", "lib": "cdlgenPrim", "cell": "pmos", "x": 3.0, "y": 4.0, "orient": "R0"},
+      {"name": "M5", "lib": "cdlgenPrim", "cell": "nmos", "x": 2.0, "y": 0.0, "orient": "R0"}
     ]
   },
   "wire": {

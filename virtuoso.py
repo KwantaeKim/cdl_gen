@@ -9,7 +9,7 @@
 import subprocess, os, shutil, glob, json, re
 
 SNAP = 0.03125   # default snap grid (Virtuoso Grid Controls -> Snap Spacing)
-STUB = 0.5       # default stub length for powerlines / ports (override per entry with "len")
+STUB = 0.5       # default stub length for ports (override per entry with "len")
 
 # drop benign batch noise (license + CDF doneProc warnings); real errors pass through
 _QUIET = ("grep -vaE 'UseNextLicense|it has not been registered"
@@ -23,12 +23,25 @@ def techmap():
     with open(os.path.join(os.path.dirname(__file__), "techmap.json")) as f:
         return json.load(f)
 
+def pdkparams(p, tm=None):
+    """General sizing -> PDK param names, deriving w_tot = w_f x n_f when techmap maps it."""
+    pname = (tm or techmap())["params"]
+    q = dict(p)
+    if "w_tot" in pname and "w_tot" not in q and {"w_f", "n_f"} <= set(q):
+        m = re.match(r'^\s*([-+]?[0-9.]+(?:[eE][-+]?[0-9]+)?)\s*([a-zA-Z]*)\s*$', str(q["w_f"]))
+        if m:
+            q["w_tot"] = f"{float(m.group(1)) * int(q['n_f']):g}{m.group(2)}"
+    return {pname[k]: v for k, v in q.items() if k in pname}
+
 def createlib(lib_name, tech=None):
-    """Create a Virtuoso library in cds.lib (tech: optional tech lib to bind)."""
+    """Create a Virtuoso library in cds.lib and verify its techfile binding."""
     work_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    bind = f'techBindTechFile(ddGetObj("{lib_name}") "{tech}")' if tech else ""
+    il    = os.path.join(os.path.dirname(__file__), "cdl_gen.il")
+    bind  = f'techBindTechFile(ddGetObj("{lib_name}") "{tech}")' if tech else ""
+    check = f'(cdlgenCheckTech "{lib_name}")' if tech else ""
     print(f"[CDL Gen]: Creating library '{lib_name}' ...")
     subprocess.run(f'''virtuoso -nograph <<EOC | awk '/===== Virtuoso =====/{{flag=1}} flag'
+(load "{il}")
 (printf "===== Virtuoso =====\\n")
 (if ddGetObj("{lib_name}")
     (printf "[CDL Gen]: Library '{lib_name}' already exists.\\n")
@@ -38,6 +51,7 @@ def createlib(lib_name, tech=None):
         (printf "[CDL Gen]: Library '{lib_name}' created.\\n")
     )
 )
+{check}
 exit()
 EOC
 ''', shell=True, cwd=work_dir)
@@ -128,11 +142,10 @@ def placesch(cell, placement, dstlib=None, params=None, snap=SNAP, width=0.0625)
     if ext:
         pins   = ext.get("pins", place.get("pins", []))
         wires  = ext.get("wires", [])
-        diodes = power = ports = []
+        diodes = ports = []
     else:
         pins   = place.get("pins", [])
         diodes = wire.get("diodes", [])
-        power  = wire.get("powerlines", [])
         ports  = wire.get("ports", [])
         wires  = wire.get("wires", [])
 
@@ -201,18 +214,11 @@ def placesch(cell, placement, dstlib=None, params=None, snap=SNAP, width=0.0625)
         off = 0.125 if isinstance(d, str) else d.get("off", 0.125)
         out.append(f'(cdlgenDiode {nm} {_snap(off, snap)} {width} {snap})')
 
-    # powerlines: short stub + label, one port pin per net (connect by name)
-    for p in power:
-        net, dr, ln = p["net"], p.get("dir", "up"), _snap(p.get("len", STUB), snap)
-        for j, term in enumerate(p["terms"]):
-            i, t = term.split(".")
-            out.append(f'(cdlgenPowerline {i} "{t}" "{net}" {ln} "{dr}" {"t" if j == 0 else "nil"} {width} {snap})')
-
     # ports: terminal-anchored signal pin (straight stub off a terminal + the pin)
     for p in ports:
         i, t = p["term"].split(".")
         dr, ln = p.get("dir", "left"), _snap(p.get("len", STUB), snap)
-        out.append(f'(cdlgenPowerline {i} "{t}" "{p["net"]}" {ln} "{dr}" t {width} {snap})')
+        out.append(f'(cdlgenPortStub {i} "{t}" "{p["net"]}" {ln} "{dr}" {width} {snap})')
 
     # explicit wires (Inst.term anchors to the real terminal)
     def node(n):
@@ -243,18 +249,11 @@ EOC
 _NUM = r'[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?'
 
 def _parse_dumpsch(text):
-    """Parse cdlgenDumpSch output into a placesch placement dict."""
-    insts, pins, wires = [], [], []
+    """Parse cdlgenDumpSch output into wire_ext (wires + pins)."""
+    pins, wires = [], []
     for ln in text.splitlines():
         ln = ln.strip()
-        if ln.startswith("inst "):
-            m = re.match(rf'inst "([^"]+)" (\S+)/(\S+) xy=\(({_NUM}) ({_NUM})\) orient="([^"]+)"', ln)
-            if not m:
-                continue
-            name, lib, cell, x, y, orient = m.groups()
-            insts.append({"name": name, "lib": lib, "cell": cell,
-                          "x": float(x), "y": float(y), "orient": orient})
-        elif ln.startswith("pin "):
+        if ln.startswith("pin "):
             m = re.match(rf'pin "([^"]+)" xy=\(({_NUM}) ({_NUM})\) orient="([^"]+)"', ln)
             if m:
                 n, x, y, o = m.groups()
@@ -262,7 +261,7 @@ def _parse_dumpsch(text):
         elif ln.startswith("wire points="):
             pts = re.findall(rf'\(({_NUM}) ({_NUM})\)', ln)
             wires.append([[float(x), float(y)] for x, y in pts])
-    return {"instances": insts, "wires": wires, "pins": pins}
+    return {"wires": wires, "pins": pins}
 
 def extractsch(cell, dstlib=None):
     """Extract a hand-routed schematic into <cell>.json "wire_ext"; "place"/"wire" untouched."""

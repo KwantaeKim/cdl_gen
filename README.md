@@ -18,7 +18,10 @@ Verify your environment before running:
 ```bash
 which python3    # should return a Python 3.9+ path
 which spiceIn    # should return the Cadence spiceIn path
+which virtuoso   # must come from the same Cadence installation as spiceIn
 ```
+
+If `spiceIn` reports `sysname returned an error status: unknown`, the shell's Cadence environment is not set up for this platform — source the correct one before running.
 
 ## Install
 
@@ -27,63 +30,75 @@ Git clone `cdl_gen` to your `virtuoso` directory (where you run `virtuoso`):
 ```
 virtuoso/
 ├── cdl_gen/              # this repo
-└── lib/                  # your library
-    └── script.py         # copied from cdl_gen/templates/
+└── lib/                  # your library (created in Step 2)
+    └── script.py         # your generator script
 ```
 
 ## Step 1 — Set Up the Process (`techmap.json`)
 
-`techmap.json` is the **single source of truth** for everything process-specific — PDK library, cell names, and parameter names. Set it once for your PDK and every generator, symbol, and CIW helper follows it; nothing process-specific is hardcoded anywhere else.
+`techmap.json` holds every PDK-specific name. Nothing else in the repo does.
 
 | Key | Meaning |
 |---|---|
-| `lib` | PDK library to import the primitives from |
-| `cells` | general name → PDK cell, e.g. `{"nmos": "nmos1v", "pmos": "pmos1v"}` |
-| `params` | general name → PDK parameter name, e.g. `{"l": "l", "w_f": "fw", "n_f": "fingers"}` |
-| `defaults` | default sizes, e.g. `{"l": "1u", "w_f": "1u", "n_f": 1}` |
+| `lib` | PDK library holding the primitives |
+| `cells` | `{"nmos": "nmos1v", "pmos": "pmos1v"}` |
+| `params` | `{"l": "l", "w_f": "fw", "n_f": "fingers", "w_tot": "w"}` |
+| `defaults` | `{"l": "1u", "w_f": "1u", "n_f": 1}` |
 
-The general parameter names are:
+You size devices with general names; `params` translates them:
 
 | Name | Meaning |
 |---|---|
-| `l` | channel length |
-| `w_f` | finger width (width of a single finger) |
-| `n_f` | number of fingers (total width = `w_f` × `n_f`, computed by the PDK) |
+| `l` | length |
+| `w_f` | width of one finger |
+| `n_f` | number of fingers |
+| `w_tot` | total width — optional, computed as `w_f` × `n_f` |
 
-To find your PDK's parameter names, instantiate the device in a schematic, select it, and press **`q`** (*Edit Object Properties*). Set the right-most **Display** column to **both** — each parameter then shows its name next to its value, so you can tell which names map to length, finger width, and number of fingers.
+Add `w_tot` only if your PDK has a total-width parameter. `cdl_gen` writes CDF values directly, so the PDK never computes it for you.
 
-Edit `techmap.json` for your PDK, then build the primitive library (`cdlgenPrim`) and its symbols:
+#### Find your PDK's names
 
-```bash
-python3 cdl_gen/config.py     # create cdlgenPrim + generate prim.py
-python3 cdlgenPrim/prim.py    # build the primitive schematics + symbols
+Dump the CDF in the CIW (a typical NMOS in your PDK is enough). In this example, `gpdk045` and `nmos1v` are used. Library and device names are different across processes (e.g., tsmc 65nm), so you need to manually set it.
+
+```scheme
+load("./cdl_gen/cdl_gen.il")
+cdlgenDumpCDF("gpdk045" "nmos1v")
 ```
 
-Each primitive's symbol shape is drawn from `templates/<name>_sym.json` (e.g. `nmos_sym.json`, `pmos_sym.json`).
+Each line reads `name  type=  value=  prompt=`. **You need to check which parameters are used in your PDK** — `w` could be the finger width in one PDK and the total width in another. Add `t` as a third argument for full detail.
 
 ## Step 2 — Generate a Circuit
 
-**Prepare a library** (e.g., `lib`). Either make it by hand in *Library Manager*, or generate it automatically — set `newlib` in `cdl_gen/newlib.py` and run:
+**Create a library** to generate into. `newlib.py` binds the PDK techfile named in `techmap.json`, so Step 1 must be done first:
 
 ```bash
-python3 cdl_gen/newlib.py
+python3 cdl_gen/newlib.py lib
 ```
 
-This calls `cdl_gen.createlib()`, which creates the library and registers it in `cds.lib` (idempotent).
+`lib` is used as an example throughout this README. Creating it by hand in *Library Manager* works too — attach the PDK as its technology library, or CDF parameters will not display.
 
-**Copy a template** (e.g., `cdl_gen/templates/cap.py`) to your library directory and rename it as you wish (call it `script` below).
+**Copy a template** into your library — the script *and* its placement. `ota_5t` is a good starting point:
+
+```bash
+cp cdl_gen/templates/ota_5t/ota_5t.py   lib/my_ota.py
+cp cdl_gen/templates/ota_5t/ota_5t.json lib/my_ota.json
+```
+
+**Set the cell name** inside the script: `cell = "my_ota"`.
+
+> **Naming rule:** script, placement, and `cell` must all match — `my_ota.py`, `my_ota.json`, `cell = "my_ota"`. `cell` is the only line to edit: the netlist (`f"{cell}.cdl"`) and the placement lookup (`f"{cell}.json"`) both derive from it.
 
 **Run it** from your `virtuoso` directory:
 
 ```bash
-python3 lib/script.py
+python3 lib/my_ota.py
 ```
 
 **Refresh** *Library Manager* (**View** → **Refresh**, or `cdlgenRefresh()` in the CIW — see [CIW Helpers](#ciw-helpers)). The generated schematic now appears under your `lib`.
 
 ## Quick Start
 
-Each script is organized into numbered sections. You edit **Section 2** to define your netlist; *Initialize* and *Generate* are boilerplate — no modification needed. An optional **Tidy schematic placement** section (see below) rebuilds the imported schematic into a clean, readable form.
+Every script has numbered sections. Edit **Section 2** only:
 
 ```python
 """
@@ -94,30 +109,51 @@ Each script is organized into numbered sections. You edit **Section 2** to defin
 """
 2. Write a Netlist (edit this section)
 """
-ckt = cdl_gen.subckt(name="simple_cap", pins=["A", "B"])
-ckt.add_device(cdl_gen.device(name="C0", model="cap", terminals=["A", "B"], C=1e-15))
+cell = "my_ota"
+nin  = dict(l="1u", w_f="2u", n_f=2)              # input pair sizing
+
+ckt = cdl_gen.subckt(name=cell, pins=["VDD", "VSS", "VINP", "VINN", "VBIAS", "VOUT"])
+ckt.add_device(cdl_gen.device(name="M1", model=nmos,
+                              terminals=["DIODE", "VINP", "TAIL", "TAIL"], **pdk(nin)))
+# ... M2 - M5
 
 """
-3. Generate (do not edit)
+3. Tidy schematic placement (edit when necessary)
+"""
+tidy = True                                       # reads my_ota.json
+
+"""
+4. Generate (do not edit)
 """
 # boilerplate
 ```
 
-See `templates/cap.py` and `templates/cap_dac/` for the full scripts.
+Terminals are `[D, G, S, B]`. Sizing lives here, never in the `.json`. A script without a placement stops at Section 3 (*Generate*).
 
 ### Tidy Schematic Placement
 
-`spiceIn` imports connectivity but not placement, so generated schematics come out tangled. For a clean schematic, describe a placement and pass it to `cdl_gen.placesch(cell, placement)`; it rebuilds the schematic accordingly. Pass `None` to skip. See `templates/cap_dac/` for the format.
+`spiceIn` imports connectivity but not placement, so schematics come out tangled. `<cell>.json` describes a clean one:
 
-The placement is one `<cell>.json` with two nested blocks: `place` (instances, rails, pins) and `wire` (wires, diodes, powerlines, ports). `extract.py` snapshots a hand-edited schematic into a separate `wire_ext` block, leaving `place` and `wire` untouched:
+| Block | Holds |
+|---|---|
+| `place` | `instances`, `pins` |
+| `wire` | `wires`, `rails`, `diodes`, `ports` |
+
+**A net is named by the pin on it.** Give every net that needs a name a `ports` or `rails` entry; the rest become `net1`, `net2`, ...
+
+Instances name their master as `{"device": "nmos"}` (resolved via `techmap.json`) or `{"lib": ..., "cell": ...}`.
+
+Set `tidy = False` in the script to skip placement.
+
+#### Keep your hand edits
+
+Edit the schematic in Virtuoso, then:
 
 ```bash
 python3 cdl_gen/extract.py <lib> <cell>
 ```
 
-When `wire_ext` is present it overrides the authored `wire` (so the schematic matches your hand edits); delete it to revert to the authored structure.
-
-An instance master is given either as `{"device": "nmos"}` — a PDK primitive resolved through `techmap.json` — or as an explicit `{"lib": ..., "cell": ...}`. Using `device` keeps the process out of the placement file.
+This writes a `wire_ext` block into `<cell>.json`, leaving `place` and `wire` untouched. `wire_ext` wins when present — delete it to go back.
 
 ### Options
 
@@ -153,19 +189,23 @@ cdlgenRefresh()
 |---|---|
 | `cdlgenRefresh()` | Full *Library Manager* refresh from disk (same as **View** → **Refresh**) |
 | `cdlgenDumpSym(lib cell)` | Print a symbol's shapes, labels, and pins |
-| `cdlgenDumpCDF(lib cell)` | Print a cell's CDF parameters |
+| `cdlgenDumpCDF(lib cell [full])` | Print a cell's CDF parameters (name/type/value/prompt; `full` prints every slot) |
+| `cdlgenCheckTech(lib)` | Report the technology library bound to `lib`, compared with `techmap.json` |
+| `cdlgenDumpNets(lib cell)` | Print each net, its terminals, and whether it is a pin |
 | `cdlgenSetFingers(lib cell)` | Toggle each device's finger count (from `techmap.json`) so PDK total width recomputes |
 
-`cdlgenDrawSym` and `cdlgenPlaceSch` are invoked in batch by `cdl_gen.drawsym` / `cdl_gen.placesch`; you don't call them by hand.
+The remaining helpers (`cdlgenDrawSym`, `cdlgenPlaceSch`, `cdlgenDumpSch`, `cdlgenTermXY`, `cdlgenTermPts`, `cdlgenDiode`, `cdlgenPortStub`, `cdlgenTechParam`) are invoked in batch by `drawsym` / `placesch` / `extractsch`; you don't call them by hand.
 
 ## Core API
 
 | Class / Function | Description |
 |---|---|
 | `cdl_gen.device(name, model, terminals, **params)` | A single SPICE device instance (e.g., cap, res, ind) |
-| `cdl_gen.subckt(name, pins)` | A `.SUBCKT` block containing devices |
+| `cdl_gen.subckt(name, pins, params=None)` | A `.SUBCKT` block containing devices (`params` adds `name=default` to the header) |
 | `subckt.add_device(device)` | Add a device to a subcircuit |
 | `cdl_gen.techmap()` | Load `techmap.json` (the process map) |
+| `cdl_gen.pdkparams(sizing)` | Map general sizing (`l`, `w_f`, `n_f`) to PDK param names, deriving `w_tot` when mapped |
+| `cdl_gen.reflib_list` | Libraries passed to `spiceIn -reflibList` (append the PDK lib to instantiate its cells) |
 | `cdl_gen.createlib(lib_name, tech=None)` | Create a Virtuoso library and register it in `cds.lib` (idempotent) |
 | `cdl_gen.pathsetup()` | Resolve module name and working directories from the calling script |
 | `cdl_gen.write_cdl(filename)` | Serialize all subcircuits to a `.cdl` file |
@@ -173,7 +213,9 @@ cdlgenRefresh()
 | `cdl_gen.spicein(cdl, work_dir, lib_dir)` | Run Cadence `spiceIn` to import the netlist |
 | `cdl_gen.topsymgen(cell_name)` | If `--topsym` is set, generate a Virtuoso symbol view |
 | `cdl_gen.drawsym(cell, spec)` | Draw a custom symbol from `templates/<spec>_sym.json` |
-| `cdl_gen.placesch(cell, placement)` | Rebuild a schematic cleanly from a placement (dict, JSON path, or `None`) |
+| `cdl_gen.placesch(cell, placement, params=None)` | Rebuild a schematic cleanly from a placement (dict, JSON path, or `None`); `params` sets per-instance CDF values |
+| `cdl_gen.extractsch(cell)` | Snapshot a hand-edited schematic into the `wire_ext` block of `<cell>.json` |
+| `cdl_gen.del_pycache(script_dir)` | Remove `__pycache__` left by the generator script |
 
 ## Device Mapping
 
@@ -191,23 +233,12 @@ inductor  → ind
 |---|---|
 | `templates/cap.py` | Simple single capacitor |
 | `templates/cap_dac/` | 3-bit binary-weighted capacitor DAC with Gaussian mismatch and clean placement |
-| `templates/ota_5t/` | 5-transistor OTA, two variants (see below) |
+| `templates/ota_5t/` | 5-transistor OTA built from PDK devices (see below) |
 
 ### OTA Example (`templates/ota_5t/`)
 
-A 5-transistor OTA in two flavors, each a script plus its `<cell>.json` placement:
+`ota_5t.py` + `ota_5t.json` build a 5-transistor OTA straight from the PDK cells named in `techmap.json` — see [Step 2](#step-2--generate-a-circuit) to run it.
 
-| Files | Devices | Needs |
-|---|---|---|
-| `ota_5t.py` + `ota_5t.json` | `cdlgenPrim` primitives | Step 1 done (`config.py` + `prim.py`) |
-| `ota_5t_noPrim.py` + `ota_5t_noPrim.json` | PDK cells directly (via `techmap`) | only `techmap.json` set |
+It is the reference for a full placement: `ports` for every pin, a `diodes` entry for the mirror, terminal-anchored `wires`, and per-instance sizing passed as `params`. Device sizes live in the script (`w_f`, `n_f`), never in the `.json`.
 
-To use, copy the chosen script **and its `.json`** into your library directory, then run it from your `virtuoso` directory:
-
-```bash
-cp cdl_gen/templates/ota_5t/ota_5t_noPrim.py   lib/
-cp cdl_gen/templates/ota_5t/ota_5t_noPrim.json lib/
-python3 lib/ota_5t_noPrim.py --scratch
-```
-
-The script reads its `<cell>.json` (`place` + `wire` blocks) and builds a clean schematic. To hand-tune and recapture, edit it in Virtuoso then run `python3 cdl_gen/extract.py <lib> <cell>` (writes `wire_ext`).
+`ota_5t_beta.py` is the same circuit built from `cdlgenPrim` wrapper cells instead of PDK cells — unverified, kept for reference.

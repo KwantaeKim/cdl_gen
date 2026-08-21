@@ -2,13 +2,13 @@
 # File          : ota_5t.py
 # Author        : Kwantae Kim <kwantae.kim@aalto.fi>
 # Group         : TSirc Group, Aalto University
-# Created       : 27.Jun.2026
+# Created       : 28.Jun.2026
 # -----------------------------------------------------------------------------
-# README        : 5-transistor OTA built from cdlgenPrim nmos/pmos cells
+# README        : 5-transistor OTA built directly from PDK primitives (techmap)
 # -----------------------------------------------------------------------------
 
 """
-1. Initialize
+1. Initialize (do not edit)
 """
 print("[CDL Gen]: === 1. Initialize ===")
 import sys, os
@@ -20,38 +20,40 @@ cdl_gen.pathsetup()
 2. Write a Netlist
 """
 print("[CDL Gen]: === 2. Write a Netlist ===")
-cdl_filename = "ota_5t.cdl"
 cell = "ota_5t"
-cdl_gen.reflib_list = ["cdlgenPrim"]      # import nmos/pmos primitives from here
+cdl_filename = f"{cell}.cdl"
+
+tm    = cdl_gen.techmap()                         # process map (single source of truth)
+nmos  = tm["cells"]["nmos"]                       # PDK cell for nmos
+pmos  = tm["cells"]["pmos"]                       # PDK cell for pmos
+pdk   = cdl_gen.pdkparams                         # general sizing -> PDK params (adds w_tot)
+cdl_gen.reflib_list = [tm["lib"]]                 # import the PDK cells from the PDK lib
 
 # device sizes (l, w_f, n_f)
-nin = dict(l="1u", w_f="2u", n_f=2)       # input pair  (M1, M2)
-pld = dict(l="1u", w_f="4u", n_f=2)       # mirror load (M3, M4)
-ntl = dict(l="1u", w_f="4u", n_f=4)       # tail source (M5)
-sizes = {"M1": nin, "M2": nin, "M3": pld, "M4": pld, "M5": ntl}   # per-instance sizing
+nin = dict(l="1u", w_f="2u", n_f=2)               # input pair  (M1, M2)
+pld = dict(l="1u", w_f="4u", n_f=2)               # mirror load (M3, M4)
+ntl = dict(l="1u", w_f="4u", n_f=4)               # tail source (M5)
+sizes = {k: pdk(v) for k, v in
+         {"M1": nin, "M2": nin, "M3": pld, "M4": pld, "M5": ntl}.items()}
 
 # 5T OTA: NMOS pair (M1,M2) -> PMOS mirror load (M3,M4), NMOS tail (M5).
 # bulk tied to source; terminals are [D, G, S, B].
 ckt = cdl_gen.subckt(name=cell, pins=["VDD", "VSS", "VINP", "VINN", "VBIAS", "VOUT"])
-ckt.add_device(cdl_gen.device(name="XM1", model="nmos", terminals=["DIODE", "VINP",  "TAIL", "TAIL"], **nin))
-ckt.add_device(cdl_gen.device(name="XM2", model="nmos", terminals=["VOUT",  "VINN",  "TAIL", "TAIL"], **nin))
-ckt.add_device(cdl_gen.device(name="XM3", model="pmos", terminals=["DIODE", "DIODE", "VDD",  "VDD"],  **pld))
-ckt.add_device(cdl_gen.device(name="XM4", model="pmos", terminals=["VOUT",  "DIODE", "VDD",  "VDD"],  **pld))
-ckt.add_device(cdl_gen.device(name="XM5", model="nmos", terminals=["TAIL",  "VBIAS", "VSS",  "VSS"],  **ntl))
+ckt.add_device(cdl_gen.device(name="M1", model=nmos, terminals=["DIODE", "VINP",  "TAIL", "TAIL"], **pdk(nin)))
+ckt.add_device(cdl_gen.device(name="M2", model=nmos, terminals=["VOUT",  "VINN",  "TAIL", "TAIL"], **pdk(nin)))
+ckt.add_device(cdl_gen.device(name="M3", model=pmos, terminals=["DIODE", "DIODE", "VDD",  "VDD"],  **pdk(pld)))
+ckt.add_device(cdl_gen.device(name="M4", model=pmos, terminals=["VOUT",  "DIODE", "VDD",  "VDD"],  **pdk(pld)))
+ckt.add_device(cdl_gen.device(name="M5", model=nmos, terminals=["TAIL",  "VBIAS", "VSS",  "VSS"],  **pdk(ntl)))
 
 """
 3. Tidy schematic placement
 """
-# set tidy = False to skip Section 3
-tidy = True
-
-placement = None
-if tidy:
-    print("[CDL Gen]: === 3. Tidy schematic placement ===")
-    placement = os.path.join(cdl_gen.lib_dir, f"{cell}.json")
+print("[CDL Gen]: === 3. Tidy schematic placement ===")
+tidy = True                                       # False to skip placement
+placement = os.path.join(cdl_gen.lib_dir, f"{cell}.json") if tidy else None
 
 """
-4. Generate
+4. Generate (do not edit)
 """
 print("[CDL Gen]: === 4. Generate ===")
 cdl_filename = cdl_gen.write_cdl(cdl_filename)

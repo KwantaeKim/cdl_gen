@@ -46,15 +46,63 @@
     )
 )
 
-; cdlgenDumpCDF(lib cell) : print a cell's CDF parameters.
-(defun cdlgenDumpCDF (lib cell)
+; cdlgenDumpCDF(lib cell [full]) : print a cell's CDF parameters (name/type/value/prompt).
+(defun cdlgenDumpCDF (lib cell @optional full)
     (let ((cdf (cdfGetBaseCellCDF (ddGetObj lib cell))))
         (unless cdf (error "[CDL Gen]: no CDF on %s/%s" lib cell))
         (printf "=== %s/%s CDF ===\n" lib cell)
         (foreach p cdf~>parameters
-            (printf "--- %L ---\n" p~>name)
-            (foreach slot p~>?
-                (printf "  %s = %L\n" slot (get p slot))))
+            (if full
+                (progn
+                    (printf "--- %L ---\n" p~>name)
+                    (foreach slot p~>?
+                        (printf "  %s = %L\n" slot (get p slot))))
+                (printf "%-16s type=%-8s value=%-12L prompt=%L\n"
+                    p~>name p~>paramType p~>value p~>prompt)))
+        t
+    )
+)
+
+; cdlgenCheckTech(lib) : report the technology library bound to lib, compared with techmap.
+(defun cdlgenCheckTech (lib)
+    (let (obj tf nm want)
+        (setq obj (ddGetObj lib))
+        (unless obj (error "[CDL Gen]: no library %s" lib))
+        (setq tf   (car (errset (techGetTechFile obj))))
+        (setq nm   (and tf (car (errset tf~>libName))))
+        (setq want (cdlgenTechParam "lib"))
+        (cond
+            ((null want)
+                (printf "[CDL Gen]: *** cannot read \"lib\" from techmap.json ***\n")
+                (printf "[CDL Gen]: set up techmap.json first (see README, Step 1).\n"))
+            ((null (ddGetObj want))
+                (printf "[CDL Gen]: *** techmap.json names PDK library '%s', which does not exist ***\n" want)
+                (printf "[CDL Gen]: fix \"lib\" in techmap.json, then delete and recreate '%s'.\n" lib))
+            ((null tf)
+                (printf "[CDL Gen]: *** '%s' has NO technology bound ***\n" lib)
+                (printf "[CDL Gen]: CDF parameters will not display. Delete '%s' and recreate it\n" lib)
+                (printf "[CDL Gen]: with 'python3 cdl_gen/newlib.py %s' to bind '%s'.\n" lib want))
+            ((null nm) (printf "[CDL Gen]: '%s' has a technology bound, name unavailable (techmap: %L)\n" lib want))
+            ((equal nm want) (printf "[CDL Gen]: '%s' -> %s  OK\n" lib nm))
+            (t
+                (printf "[CDL Gen]: *** '%s' is bound to '%s' but techmap.json says '%s' ***\n" lib nm want)
+                (printf "[CDL Gen]: fix \"lib\" in techmap.json, or rebind the library.\n")))
+        t
+    )
+)
+
+; cdlgenDumpNets(lib cell [view]) : print each net, its terminals and whether it is a pin.
+(defun cdlgenDumpNets (lib cell @optional (view "schematic"))
+    (let (cv)
+        (setq cv (dbOpenCellViewByType lib cell view "" "r"))
+        (unless cv (error "[CDL Gen]: cannot open %s/%s %s" lib cell view))
+        (printf "=== %s/%s nets ===\n" lib cell)
+        (foreach net cv~>nets
+            (printf "net %L pin=%L conn=" net~>name (if net~>term "yes" "no"))
+            (foreach it net~>instTerms
+                (printf "%s.%s " it~>inst~>name it~>name))
+            (printf "\n"))
+        (dbClose cv)
         t
     )
 )
@@ -160,9 +208,9 @@
     )
 )
 
-; cdlgenPowerline(inst term net len dir aspin w snap) : short stub + port pin (aspin) or net label.
-(defun cdlgenPowerline (inst term net len dir aspin w snap)
-    (let (p ex ey lo wire)
+; cdlgenPortStub(inst term net len dir w snap) : short stub off a terminal with a port pin at its end.
+(defun cdlgenPortStub (inst term net len dir w snap)
+    (let (p ex ey lo)
         (setq p (cdlgenTermXY inst term))
         (setq ex (xCoord p)) (setq ey (yCoord p))
         (cond
@@ -170,11 +218,9 @@
             ((equal dir "down")  (setq ey (difference ey len)))
             ((equal dir "left")  (setq ex (difference ex len)))
             ((equal dir "right") (setq ex (plus ex len))))
-        (setq wire (car (schCreateWire cdlgenCV "draw" "full" (list p (list ex ey)) w snap 0.0)))
+        (schCreateWire cdlgenCV "draw" "full" (list p (list ex ey)) w snap 0.0)
         (setq lo (if (member dir (list "up" "down")) "R90" "R0"))
-        (if aspin
-            (schCreatePin cdlgenCV ipin net "inputOutput" nil (list ex ey) lo)
-            (schCreateWireLabel cdlgenCV wire (list ex ey) net "centerCenter" lo "stick" 0.0625 0.0))
+        (schCreatePin cdlgenCV ipin net "inputOutput" nil (list ex ey) lo)
     )
 )
 

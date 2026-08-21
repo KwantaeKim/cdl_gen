@@ -5,6 +5,7 @@
 # Created       : 26.Jun.2026
 # -----------------------------------------------------------------------------
 # README        : Create a new Virtuoso library
+# Usage         : python3 cdl_gen/newlib.py <libname>
 # -----------------------------------------------------------------------------
 
 """
@@ -20,5 +21,7 @@ cdl_gen.pathsetup()
 2. Create a Library
 """
 print("[CDL Gen]: === 2. Create a Library ===")
-newlib = "cdlgenTemplates"       # Write your library name
-cdl_gen.createlib(newlib)
+names = [a for a in sys.argv[1:] if not a.startswith("-")]
+if not names:
+    sys.exit("usage: python3 cdl_gen/newlib.py <libname>")
+cdl_gen.createlib(names[0], tech=cdl_gen.techmap()["lib"])   # bind the PDK techfile

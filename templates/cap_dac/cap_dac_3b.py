@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# File          : cap_dac.py
+# File          : cap_dac_3b.py
 # Author        : Kwantae Kim <kwantae.kim@aalto.fi>
 # Group         : TSirc Group, Aalto University
 # Created       : 20.Mar.2026
@@ -47,13 +47,9 @@ for bit, count in groups:
 """
 3. Tidy schematic placement
 """
-# set tidy = False to skip Section 3
-tidy = True
-
-placement = None
-if tidy:
-    print("[CDL Gen]: === 3. Tidy schematic placement ===")
-    placement = os.path.join(cdl_gen.lib_dir, f"{cell}.json")
+print("[CDL Gen]: === 3. Tidy schematic placement ===")
+tidy = True                                       # False to skip placement
+placement = os.path.join(cdl_gen.lib_dir, f"{cell}.json") if tidy else None
 
 """
 4. Generate

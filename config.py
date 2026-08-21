@@ -56,7 +56,7 @@ for primname, cellname in cells.items():
     ckt = cdl_gen.subckt(name=primname, pins=["D", "G", "S", "B"], params=sizing)
     ckt.add_device(cdl_gen.device(
         name="M0", model=cellname, terminals=["D", "G", "S", "B"],
-        **{{pname[g]: g for g in pname}},
+        **{{pname[g]: g for g in sizing}},   # only params the subckt declares
     ))
 
 """
