@@ -4,9 +4,19 @@
 
 # cdl_gen
 
-A Python-to-schematic generator that creates CDL (Circuit Description Language) netlists and imports them into Cadence Virtuoso.
+**Python → CDL netlist → Virtuoso schematic.**
 
-Define your circuits in Python, and `cdl_gen` handles netlist generation, Virtuoso library import via `spiceIn`, and symbol creation.
+Describe a circuit in Python. `cdl_gen` writes the CDL (Circuit Description Language) netlist, imports it into a Cadence Virtuoso library with `spiceIn`, and generates the symbol.
+
+- 📐 **Tidy schematics** — rebuilt from a JSON placement
+- 🔁 **PDK-agnostic** — `techmap.json` controls the PDK-related global setup
+
+<p align="center">
+  <a href="https://www.youtube.com/playlist?list=PLGGVNEXMLFps">
+    <img src="https://img.shields.io/badge/Demo%20Videos%20on%20YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"
+    alt="Demo Videos Available on YouTube">
+  </a>
+</p>
 
 ## Prerequisites
 
