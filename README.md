@@ -12,7 +12,7 @@ Describe a circuit in Python. `cdl_gen` writes the CDL (Circuit Description Lang
 - 🔁 **PDK-agnostic** — `techmap.json` controls the PDK-related global setup
 
 <p align="center">
-  <a href="https://www.youtube.com/playlist?list=PLGGVNEXMLFps">
+  <a href="https://www.youtube.com/playlist?list=PLGGVNEXMLFps" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/badge/Demo%20Videos%20on%20YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"
     alt="Demo Videos Available on YouTube">
   </a>
